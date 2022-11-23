@@ -1,0 +1,58 @@
+from keras.models import Sequential
+from keras.layers import Convolution2D
+from keras.layers import MaxPooling2D
+from keras.layers import Dense
+from keras.layers import Flatten
+from keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
+
+model_classification = Sequential() #CNN initializtion
+
+model_classification.add(Convolution2D(32,(3,3),input_shape = (64,64,3), activation = 'relu')) #layer 1
+model_classification.add(MaxPooling2D(pool_size = (2, 2)))
+
+model_classification.add(Convolution2D(32,(3,3), activation = 'relu')) #layer 2
+model_classification.add(MaxPooling2D(pool_size = (2, 2)))
+
+
+model_classification.add(Flatten()) #Flattening layers
+
+
+model_classification.add(Dense(units=32, activation = 'relu'))
+model_classification.add(Dense(units=64, activation = 'relu'))
+model_classification.add(Dense(units=128,activation = 'relu'))
+model_classification.add(Dense(units=256,activation = 'relu'))
+model_classification.add(Dense(units=256,activation = 'relu'))
+model_classification.add(Dense(units=7,activation = 'softmax'))
+
+model_classification.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy']) #Compiling CNN
+
+#Fitting CNN on training and testing images
+train_data = ImageDataGenerator(rescale = 1./255, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True) 
+test_data = ImageDataGenerator(rescale = 1./255)
+
+print("\nTraining...\n")
+
+training_set = train_data.flow_from_directory('train', target_size=(64,64), batch_size=12, class_mode='categorical')
+#batch size must be selected in such a way that it is a divisor of no.of training images.
+testing_set = test_data.flow_from_directory('test', target_size=(64,64), batch_size=12, class_mode='categorical') 
+#class mode is categorical since 3 things are being classified.
+
+history = model_classification.fit(training_set, steps_per_epoch = 101, epochs = 20, validation_data = testing_set, validation_steps = 300) 
+# steps_per_epoch = Total training images / batch_size, validation_steps = Total testing images
+#Graphs
+history.history.keys()
+
+plt.plot(history.history['accuracy'])
+plt.title('Accuracy of the Model')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.show()
+
+plt.plot(history.history['loss'])
+plt.title('Loss of the Model')
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.show()
+
+model_classification.save("model1.h5")
